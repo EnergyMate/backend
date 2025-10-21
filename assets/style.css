@@ -1,0 +1,109 @@
+/* Custom styles untuk melengkapi Tailwind */
+body {
+	font-family: 'Inter', sans-serif;
+	background-color: #f8fafc; /* gray-50 */
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.view {
+	display: none;
+}
+
+.view.active {
+	display: block;
+	animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Styling untuk konten artikel di view detail */
+.article-content h2 {
+	font-size: 1.5rem; /* 24px */
+	font-weight: 700;
+	margin-top: 2rem;
+	margin-bottom: 1rem;
+}
+
+.article-content p {
+	margin-bottom: 1rem;
+	line-height: 1.75;
+}
+
+.article-content ul {
+	list-style-type: disc;
+	padding-left: 1.5rem;
+	margin-bottom: 1rem;
+}
+
+.article-content li {
+	margin-bottom: 0.5rem;
+}
+
+.article-content a {
+	color: #2563eb; /* blue-600 */
+	text-decoration: underline;
+}
+
+.article-content blockquote {
+	border-left: 4px solid #d1d5db; /* gray-300 */
+	padding-left: 1rem;
+	margin: 1.5rem 0;
+	font-style: italic;
+	color: #4b5563; /* gray-600 */
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.nav-link.active {
+	background-color: #2563eb; /* blue-600 */
+	color: white;
+}
+
+.nav-link.active:hover {
+	background-color: #1d4ed8; /* blue-700 */
+	color: white;
+}
+
+/* Style untuk scrollbar di chat window */
+.chat-window::-webkit-scrollbar {
+	width: 6px;
+}
+
+.chat-window::-webkit-scrollbar-track {
+	background: #f1f5f9; /* slate-100 */
+}
+
+.chat-window::-webkit-scrollbar-thumb {
+	background: #cbd5e1; /* slate-300 */
+	border-radius: 3px;
+}
+
+.chat-window::-webkit-scrollbar-thumb:hover {
+	background: #94a3b8; /* slate-400 */
+}
+
+/* Transisi untuk interaksi yang lebih mulus */
+button,
+.nav-link {
+	transition: background-color 0.2s ease-in-out,
+		color 0.2s ease-in-out,
+		border-color 0.2s ease-in-out,
+		box-shadow 0.2s ease-in-out;
+}
+
+/* Sembunyikan elemen header jika body tidak memiliki class 'logged-in' */
+body:not(.logged-in) #topUser,
+body:not(.logged-in) #btnLogoutTop {
+	display: none;
+}

@@ -1,759 +1,266 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dasbor EnergyMate</title>
-
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Google Font Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Bootstrap Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-
-  <!-- Marked Library-->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-  <style>
-    /* Custom styles untuk melengkapi Tailwind */
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f8fafc; /* gray-50 */
-    }
-    .view {
-      display: none;
-    }
-    .view.active {
-      display: block;
-      animation: fadeIn 0.5s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .nav-link.active {
-        background-color: #2563eb; /* blue-600 */
-        color: white;
-    }
-    .nav-link.active:hover {
-        background-color: #1d4ed8; /* blue-700 */
-        color: white;
-    }
-    /* Style untuk scrollbar di chat window */
-    .chat-window::-webkit-scrollbar {
-        width: 6px;
-    }
-    .chat-window::-webkit-scrollbar-track {
-        background: #f1f5f9; /* slate-100 */
-    }
-    .chat-window::-webkit-scrollbar-thumb {
-        background: #cbd5e1; /* slate-300 */
-        border-radius: 3px;
-    }
-    .chat-window::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8; /* slate-400 */
-    }
-    /* Transisi untuk interaksi yang lebih mulus */
-    button, .nav-link {
-        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
-    /* Sembunyikan elemen header jika body tidak memiliki class 'logged-in' */
-    body:not(.logged-in) #topUser,
-    body:not(.logged-in) #btnLogoutTop {
-        display: none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <title>EnergyMate - Asisten Energi Cerdas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Marked Library ditambahkan untuk render hasil prediksi -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="assets/style.css">
 </head>
 <body class="antialiased text-gray-800">
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <a href="index.html" class="flex-shrink-0 flex items-center gap-2 cursor-pointer">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-white shadow-md">
+                        <i class="bi bi-lightning-charge-fill text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-gray-900">EnergyMate</h1>
+                        <p class="text-xs text-gray-500 -mt-1">Asisten Energi Cerdas</p>
+                    </div>
+                </a>
 
-  <!-- TOP NAV -->
-  <nav class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        <div class="flex items-center">
-          <button id="mobileToggle" class="lg:hidden mr-3 p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
-            <i class="bi bi-list text-2xl"></i>
-          </button>
-          <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="showView('dashboard', event)">
-            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-white shadow-md">
-              <i class="bi bi-lightning-charge-fill text-xl"></i>
-            </div>
-            <div>
-              <h1 class="text-lg font-bold text-gray-900">EnergyMate</h1>
-              <p class="text-xs text-gray-500 -mt-1">Asisten Energi Cerdas</p>
-            </div>
-          </div>
-        </div>
-        <div class="flex items-center gap-4">
-          <div id="topUser" class="hidden md:block text-right">
-             <!-- Konten diisi oleh JS -->
-          </div>
-          <button id="btnLogoutTop" onclick="logout()" class="hidden md:inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-            <i class="bi bi-box-arrow-right"></i>
-            <span class="hidden lg:inline">Keluar</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </nav>
+                <div class="hidden md:flex items-center gap-8">
+                    <nav class="flex items-center gap-8">
+                        <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-600">Home</a>
+                        <a href="blog.html" class="text-sm font-medium text-gray-600 hover:text-blue-600">Blog</a>
+                        <a href="dashboard.html" class="text-sm font-medium text-gray-600 hover:text-blue-600">Dashboard</a>
+                    </nav>
+                    <a href="dashboard.html" class="inline-flex items-center gap-2 px-5 py-2.5 border border-transparent text-sm font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition">
+                        Masuk
+                    </a>
+                </div>
 
-  <!-- AUTH PAGE -->
-  <div id="auth-container" class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-8">
-      <!-- Login View -->
-      <div id="login-view">
-        <div class="text-center">
-            <h2 class="text-2xl font-bold text-gray-900">Selamat Datang Kembali</h2>
-            <p class="text-gray-500 mt-2">Masuk untuk mengakses dasbor Anda.</p>
-        </div>
-        <form onsubmit="loginUser(event)" class="mt-8 space-y-6">
-          <div>
-            <label for="login-email" class="text-sm font-medium text-gray-700">Email / Nama Pengguna</label>
-            <input id="login-email" type="text" class="mt-1 block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="john@example.com" autofocus required>
-          </div>
-          <div>
-            <label for="login-password" class="text-sm font-medium text-gray-700">Kata Sandi</label>
-            <input id="login-password" type="password" class="mt-1 block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="••••••••" required>
-          </div>
-          <button type="submit" id="login-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            <span class="btn-text">Masuk</span>
-            <span class="btn-spinner hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-          </button>
-        </form>
-        <p class="text-center text-sm text-gray-600 mt-6">
-          Belum punya akun? <a href="#" onclick="toggleAuthView(event)" class="font-medium text-blue-600 hover:text-blue-500">Daftar</a>
-        </p>
-      </div>
-      <!-- Register View -->
-      <div id="register-view" class="hidden">
-         <div class="text-center">
-            <h2 class="text-2xl font-bold text-gray-900">Buat Akun Baru</h2>
-            <p class="text-gray-500 mt-2">Isi detail untuk memulai.</p>
-        </div>
-        <form onsubmit="registerUser(event)" class="mt-8 space-y-4">
-          <input id="reg-name" class="block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Nama Lengkap" required>
-          <input id="reg-username" class="block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Nama Pengguna" required>
-          <input id="reg-email" type="email" class="block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Alamat Email" required>
-          <input id="reg-password" type="password" class="block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Kata Sandi" required>
-          <input id="reg-pln" class="block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="ID Pelanggan PLN (Opsional)">
-          <button type="submit" id="register-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-            <span class="btn-text">Daftar</span>
-            <span class="btn-spinner hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-          </button>
-        </form>
-        <p class="text-center text-sm text-gray-600 mt-6">
-          Sudah punya akun? <a href="#" onclick="toggleAuthView(event)" class="font-medium text-blue-600 hover:text-blue-500">Masuk</a>
-        </p>
-      </div>
-      <div id="auth-result" class="hidden mt-4 text-center text-sm p-3 rounded-md"></div>
-    </div>
-  </div>
-
-  <!-- MAIN APP: hidden until auth -->
-  <div id="app-container" class="hidden">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="lg:flex lg:gap-8 py-8">
-        <!-- SIDEBAR (desktop) -->
-        <aside class="hidden lg:block w-64 flex-shrink-0">
-          <div class="sticky top-24 space-y-6">
-            <div>
-              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Menu</h3>
-              <nav class="mt-4 space-y-1">
-                <a href="#" class="nav-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-100" onclick="showView('dashboard', event)" data-view="dashboard"><i class="bi bi-grid-1x2-fill mr-3 text-lg"></i> Dasbor</a>
-                <a href="#" class="nav-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-100" onclick="showView('appliance', event)" data-view="appliance"><i class="bi bi-cpu-fill mr-3 text-lg"></i> Cek Alat</a>
-                <a href="#" class="nav-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-100" onclick="showView('billing', event)" data-view="billing"><i class="bi bi-receipt-cutoff mr-3 text-lg"></i> Cek Tagihan</a>
-                <a href="#" class="nav-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-100" onclick="showView('history', event)" data-view="history"><i class="bi bi-clock-history mr-3 text-lg"></i> Riwayat</a>
-                <a href="#" class="nav-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-100" onclick="showView('chatbot', event)" data-view="chatbot"><i class="bi bi-robot mr-3 text-lg"></i> Asisten AI</a>
-              </nav>
-            </div>
-            <div class="border-t pt-6 space-y-4">
-              <div class="px-3">
-                  <p class="text-xs text-gray-500">Masuk sebagai</p>
-                  <p id="user-info" class="text-sm font-semibold text-gray-800 truncate">-</p>
-              </div>
-              <button onclick="logout()" class="w-full logout-button hidden items-center justify-center gap-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                <i class="bi bi-box-arrow-left"></i> Keluar
-              </button>
-            </div>
-          </div>
-        </aside>
-
-        <!-- SIDEBAR (mobile offcanvas) -->
-        <div id="mobileSidebar" class="fixed inset-0 flex z-50 lg:hidden" style="display: none;">
-            <div id="mobileSidebarBackdrop" class="fixed inset-0 bg-black/30" aria-hidden="true"></div>
-            <div id="mobileSidebarContent" class="relative max-w-xs w-full bg-white shadow-xl py-4 pb-12 flex flex-col overflow-y-auto transform -translate-x-full">
-                <div class="px-4 flex">
-                    <button id="mobileSidebarClose" type="button" class="-m-2 p-2 rounded-md inline-flex items-center justify-center text-gray-400">
-                        <i class="bi bi-x text-3xl"></i>
+                <div class="md:hidden">
+                    <button id="mobileToggle" class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span class="sr-only">Buka menu</span>
+                        <i class="bi bi-list text-2xl"></i>
                     </button>
                 </div>
-                <nav class="mt-8 px-2 space-y-1">
-                  <a href="#" class="nav-link group flex items-center px-3 py-2 text-base font-medium rounded-md text-gray-700 hover:bg-gray-100" onclick="showView('dashboard', event); closeMobileSidebar()" data-view="dashboard"><i class="bi bi-grid-1x2-fill mr-3"></i> Dasbor</a>
-                  <a href="#" class="nav-link group flex items-center px-3 py-2 text-base font-medium rounded-md text-gray-700 hover:bg-gray-100" onclick="showView('appliance', event); closeMobileSidebar()" data-view="appliance"><i class="bi bi-cpu-fill mr-3"></i> Cek Alat</a>
-                  <a href="#" class="nav-link group flex items-center px-3 py-2 text-base font-medium rounded-md text-gray-700 hover:bg-gray-100" onclick="showView('billing', event); closeMobileSidebar()" data-view="billing"><i class="bi bi-receipt-cutoff mr-3"></i> Cek Tagihan</a>
-                  <a href="#" class="nav-link group flex items-center px-3 py-2 text-base font-medium rounded-md text-gray-700 hover:bg-gray-100" onclick="showView('history', event); closeMobileSidebar()" data-view="history"><i class="bi bi-clock-history mr-3"></i> Riwayat</a>
-                  <a href="#" class="nav-link group flex items-center px-3 py-2 text-base font-medium rounded-md text-gray-700 hover:bg-gray-100" onclick="showView('chatbot', event); closeMobileSidebar()" data-view="chatbot"><i class="bi bi-robot mr-3"></i> Asisten AI</a>
-                </nav>
-                <div class="mt-auto border-t pt-6 space-y-4 px-4">
-                  <div>
-                    <p class="text-xs text-gray-500">Masuk sebagai</p>
-                    <p id="user-info-mobile" class="text-sm font-semibold text-gray-800 truncate">-</p>
-                  </div>
-                  <button onclick="logout()" class="w-full logout-button hidden items-center justify-center gap-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200">
-                    <i class="bi bi-box-arrow-left"></i> Keluar
-                  </button>
-                </div>
             </div>
         </div>
+    </header>
 
-        <!-- MAIN CONTENT -->
-        <main class="flex-1 min-w-0">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 id="view-title" class="text-2xl font-bold text-gray-900">Dasbor</h2>
-              <p id="view-subtitle" class="text-sm text-gray-500 mt-1">Ringkasan & aksi cepat</p>
+    <!-- SIDEBAR (mobile offcanvas) -->
+    <div id="mobileSidebar" class="fixed inset-0 flex z-50 md:hidden" style="display: none;">
+        <div id="mobileSidebarBackdrop" class="fixed inset-0 bg-black/30" aria-hidden="true"></div>
+        <div id="mobileSidebarContent" class="relative max-w-xs w-full bg-white shadow-xl py-4 pb-12 flex flex-col overflow-y-auto transform -translate-x-full">
+            <div class="px-4 flex items-center justify-between">
+                <h2 class="text-lg font-semibold">Menu</h2>
+                <button id="mobileSidebarClose" type="button" class="-m-2 p-2 rounded-md inline-flex items-center justify-center text-gray-400">
+                    <i class="bi bi-x text-3xl"></i>
+                </button>
             </div>
-            <button class="hidden md:inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700" onclick="showView('appliance', null)">
-              <i class="bi bi-lightning-charge-fill"></i> Cek Cepat
-            </button>
-          </div>
-
-          <!-- Dashboard View -->
-          <section id="view-dashboard" class="view space-y-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="md:col-span-2 lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-800">Selamat datang di EnergyMate!</h3>
-                    <p class="text-sm text-gray-500 mt-1">Pantau konsumsi, cek tagihan, dan dapatkan rekomendasi hemat energi.</p>
-                </div>
-                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-                    <p class="text-sm font-medium text-gray-500">Estimasi kWh Hari Ini</p>
-                    <p id="kwh-today" class="text-3xl font-bold text-blue-600 mt-2">- <span class="text-lg font-medium">kWh</span></p>
-                </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-                    <p class="text-sm font-medium text-gray-500">Estimasi Tagihan Bulanan</p>
-                    <p id="bill-estimate" class="text-3xl font-bold text-green-600 mt-2">Rp -</p>
-                </div>
-                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-                    <p class="text-sm font-medium text-gray-500">Rekomendasi Utama</p>
-                    <p class="text-base font-semibold text-yellow-700 mt-2 flex items-center gap-2"><i class="bi bi-lightbulb-off-fill"></i>Matikan alat saat tidak dipakai</p>
-                </div>
+            <nav class="mt-8 px-2 space-y-1">
+                <a href="#" class="nav-link group flex items-center px-3 py-2 text-base font-medium rounded-md text-gray-700 hover:bg-gray-100" onclick="closeMobileSidebar()"><i class="bi bi-house-door-fill mr-3"></i> Home</a>
+                <a href="blog.html" class="nav-link group flex items-center px-3 py-2 text-base font-medium rounded-md text-gray-700 hover:bg-gray-100" onclick="closeMobileSidebar()"><i class="bi bi-newspaper mr-3"></i> Blog</a>
+                <a href="dashboard.html" class="nav-link group flex items-center px-3 py-2 text-base font-medium rounded-md text-gray-700 hover:bg-gray-100" onclick="closeMobileSidebar()"><i class="bi bi-grid-1x2-fill mr-3"></i> Dashboard</a>
+            </nav>
+            <div class="mt-auto pt-6 px-4">
+                <a href="dashboard.html" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow">
+                    Masuk
+                </a>
             </div>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-800">Aktivitas Terkini</h3>
-                    <div id="recent-activity" class="mt-4 flow-root">
-                      <div class="text-center py-8 text-gray-400">
-                        <i class="bi bi-archive text-4xl"></i>
-                        <p class="mt-2 text-sm">Belum ada aktivitas. Coba jalankan prediksi.</p>
-                      </div>
-                    </div>
-                </div>
-                <div class="space-y-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                        <h3 class="font-semibold text-gray-800">Cek Tagihan Cepat</h3>
-                        <div class="mt-4">
-                          <input id="billing-pln" type="text" class="block w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="ID PLN Anda">
-                          <button class="mt-3 w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700" onclick="getBillingEstimation()">Cek Tagihan</button>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                        <h3 class="font-semibold text-gray-800">Asisten AI</h3>
-                        <p class="text-sm text-gray-500 mt-1">Tanya tips hemat energi.</p>
-                        <button class="mt-4 w-full bg-gray-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-900" onclick="showView('chatbot', null)">Buka Asisten</button>
-                    </div>
-                </div>
-            </div>
-          </section>
-
-          <!-- Appliance View -->
-          <section id="view-appliance" class="view">
-            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200">
-              <h3 class="text-xl font-bold text-gray-900">Prediksi Energi Alat Elektronik</h3>
-              <p class="text-sm text-gray-500 mt-1">Tambahkan alat elektronik rumah Anda untuk memprediksi konsumsi energi satu jam ke depan.</p>
-              <div class="mt-6 border-t pt-6 space-y-4" id="appliance-rows-container"></div>
-              <div class="mt-4 flex items-center gap-4">
-                  <button onclick="addApplianceRow()" class="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                      <i class="bi bi-plus-lg"></i> Tambah Alat
-                  </button>
-              </div>
-              <div class="mt-6 border-t pt-6">
-                  <label for="hour" class="block text-sm font-medium text-gray-700">Waktu Prediksi</label>
-                  <select id="hour" class="mt-1 block w-full max-w-xs pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
-              </div>
-              <div class="mt-6">
-                  <button onclick="getAppliancePrediction()" id="predict-button" class="w-full md:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                      <i class="bi bi-calculator-fill"></i> 
-                      <span class="btn-text">Dapatkan Prediksi</span>
-                      <span class="btn-spinner hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-                  </button>
-              </div>
-              <div id="appliance-result-container" class="mt-8">
-                  <div class="bg-gray-50 text-center py-12 px-6 rounded-lg border border-gray-200">
-                      <i class="bi bi-cpu text-5xl text-gray-400"></i>
-                      <p class="mt-4 text-sm font-medium text-gray-500">Hasil prediksi akan muncul di sini.</p>
-                  </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- Billing View -->
-          <section id="view-billing" class="view">
-            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200">
-              <h3 class="text-xl font-bold text-gray-900">Cek Tagihan PLN</h3>
-              <p class="text-sm text-gray-500 mt-1">Cek tagihan terakhir Anda langsung dari server PLN.</p>
-              <div class="mt-6">
-                <label for="billing-pln-2" class="sr-only">ID Pelanggan PLN</label>
-                <div class="relative">
-                    <input id="billing-pln-2" type="text" class="block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Masukkan ID Pelanggan PLN Anda">
-                    <button id="billing-check-button" class="absolute inset-y-0 right-0 flex items-center px-4 font-semibold text-white bg-blue-600 rounded-r-md hover:bg-blue-700" onclick="getBillingEstimationFromField()">
-                        <span class="btn-text">Cek</span>
-                        <span class="btn-spinner hidden animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                    </button>
-                </div>
-              </div>
-              <div id="billing-result-container" class="mt-6">
-                 <div class="bg-gray-50 text-center py-12 px-6 rounded-lg border border-gray-200">
-                    <i class="bi bi-receipt-cutoff text-5xl text-gray-400"></i>
-                    <p class="mt-4 text-sm font-medium text-gray-500">Detail tagihan akan muncul di sini.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- History View -->
-          <section id="view-history" class="view">
-            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200">
-                <div class="flex justify-between items-center mb-4">
-                  <h3 class="text-xl font-bold text-gray-900">Riwayat Prediksi</h3>
-                  <button class="text-sm font-medium text-blue-600 hover:text-blue-800" onclick="getHistory()"><i class="bi bi-arrow-clockwise"></i> Segarkan</button>
-                </div>
-                <div id="history-result-container" class="flow-root">
-                    <div class="text-center py-12 text-gray-400">
-                        <i class="bi bi-archive text-4xl"></i>
-                        <p class="mt-2 text-sm">Klik segarkan untuk memuat riwayat Anda.</p>
-                    </div>
-                </div>
-            </div>
-          </section>
-
-          <!-- Chatbot View -->
-          <section id="view-chatbot" class="view">
-             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[calc(100vh-12rem)]">
-                <div class="p-4 border-b">
-                  <h3 class="text-lg font-semibold">Asisten AI</h3>
-                  <p class="text-sm text-gray-500">Tanya apa saja tentang hemat energi!</p>
-                </div>
-                <div id="chat-window" class="flex-1 p-4 overflow-y-auto chat-window"></div>
-                <div class="p-4 border-t bg-gray-50">
-                  <div class="relative">
-                    <input type="text" id="chat-input" class="w-full pl-4 pr-16 py-3 rounded-full border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Ketik pesan Anda...">
-                    <button onclick="sendMessageToChatbot()" class="absolute inset-y-0 right-0 flex items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-full m-1 hover:bg-blue-700">
-                      <i class="bi bi-send-fill"></i>
-                    </button>
-                  </div>
-                </div>
-            </div>
-          </section>
-
-        </main>
-      </div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    // --- APP SETUP & STATE ---
-    const API_BASE_URL = 'http://localhost:5001/api';
-    let authToken = null;
-    let currentUser = null;
-    let chatHistory = [];
-    let applianceRows = [];
-    let userPower = null; // Menyimpan daya listrik pengguna (misal: '1300 VA')
+    <!-- Hero -->
+    <main>
+        <section class="py-20 md:py-32 bg-white text-center">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 leading-tight">
+                    Hemat Energi, <span class="text-blue-600">Hemat Biaya</span>.
+                </h1>
+                <p class="mt-6 max-w-2xl mx-auto text-lg text-gray-600">
+                    EnergyMate membantu Anda memahami dan mengoptimalkan penggunaan energi di rumah dengan analisis cerdas dan prediksi berbasis AI.
+                </p>
+                <div class="mt-10">
+                    <a href="dashboard.html" class="inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-500/40 transition">
+                        Mulai Sekarang <i class="bi bi-arrow-right-short ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
 
-    const defaultDevices = [
-        { name: "Microwave", wattage: 1000, subMeter: "Sub_metering_1" }, { name: "Penanak Nasi", wattage: 300, subMeter: "Sub_metering_1" },
-        { name: "Blender", wattage: 250, subMeter: "Sub_metering_1" }, { name: "Dispenser Air", wattage: 200, subMeter: "Sub_metering_1" },
-        { name: "Pemanggang Roti", wattage: 850, subMeter: "Sub_metering_1" }, { name: "Mesin Cuci", wattage: 500, subMeter: "Sub_metering_2" },
-        { name: "Mesin Pengering", wattage: 3000, subMeter: "Sub_metering_2" }, { name: "Setrika", wattage: 1000, subMeter: "Sub_metering_2" },
-        { name: "Pompa Air", wattage: 750, subMeter: "Sub_metering_2" }, { name: "Pengering Rambut", wattage: 600, subMeter: "Sub_metering_2" },
-        { name: "Pemanas Air", wattage: 1500, subMeter: "Sub_metering_3" }, { name: "AC (Air Conditioner)", wattage: 800, subMeter: "Sub_metering_3" },
-        { name: "Penyedot Debu", wattage: 1200, subMeter: "Sub_metering_3" }, { name: "Kipas Angin", wattage: 100, subMeter: "Sub_metering_3" },
-        { name: "Lampu Pijar", wattage: 35, subMeter: "Sub_metering_3" }, { name: "Lampu LED", wattage: 20, subMeter: "Sub_metering_3" },
-    ];
-
-    // --- DOM ELEMENT SELECTORS ---
-    const authContainer = document.getElementById('auth-container');
-    const appContainer = document.getElementById('app-container');
-    const userInfo = document.getElementById('user-info');
-    const userInfoMobile = document.getElementById('user-info-mobile');
-    const topUser = document.getElementById('topUser');
-    const btnLogoutTop = document.getElementById('btnLogoutTop');
-    const allLogoutButtons = document.querySelectorAll('.logout-button');
-
-    // --- UI HELPERS ---
-    function toggleButtonSpinner(buttonId, show) {
-        const button = document.getElementById(buttonId);
-        if (button) {
-            const text = button.querySelector('.btn-text');
-            const spinner = button.querySelector('.btn-spinner');
-            if (show) {
-                text.classList.add('hidden');
-                spinner.classList.remove('hidden');
-                button.disabled = true;
-            } else {
-                text.classList.remove('hidden');
-                spinner.classList.add('hidden');
-                button.disabled = false;
-            }
-        }
-    }
-    
-    // --- MOBILE SIDEBAR ---
-    const mobileSidebar = document.getElementById('mobileSidebar');
-    const mobileSidebarContent = document.getElementById('mobileSidebarContent');
-    const mobileSidebarBackdrop = document.getElementById('mobileSidebarBackdrop');
-    
-    function openMobileSidebar() { mobileSidebar.style.display = 'flex'; setTimeout(() => { mobileSidebarContent.classList.add('translate-x-0'); }, 10); }
-    function closeMobileSidebar() { mobileSidebarContent.classList.remove('translate-x-0'); setTimeout(() => { mobileSidebar.style.display = 'none'; }, 300); }
-    document.getElementById('mobileToggle').addEventListener('click', openMobileSidebar);
-    document.getElementById('mobileSidebarClose').addEventListener('click', closeMobileSidebar);
-    mobileSidebarBackdrop.addEventListener('click', closeMobileSidebar);
-
-    // --- AUTH & UI TOGGLING ---
-    function toggleAuthView(event) {
-      event?.preventDefault();
-      document.getElementById('login-view').classList.toggle('hidden');
-      document.getElementById('register-view').classList.toggle('hidden');
-      document.getElementById('auth-result').classList.add('hidden');
-    }
-
-    function updateAuthStatus() {
-      if (authToken && currentUser) {
-        document.body.classList.add('logged-in');
-        authContainer.classList.add('hidden');
-        appContainer.classList.remove('hidden');
-        const userName = currentUser.name || currentUser.email;
-        const firstName = userName.split(' ')[0];
-        userInfo.textContent = userName;
-        userInfoMobile.textContent = userName;
-        topUser.innerHTML = `<p class="text-sm font-medium text-gray-600">Selamat datang, ${firstName}!</p>`;
-        allLogoutButtons.forEach(btn => btn.classList.remove('hidden'));
-        document.getElementById('billing-pln').value = currentUser.plnCustomerId || '';
-        document.getElementById('billing-pln-2').value = currentUser.plnCustomerId || '';
-        showView('dashboard');
-      } else {
-        document.body.classList.remove('logged-in');
-        authContainer.classList.remove('hidden');
-        appContainer.classList.add('hidden');
-        allLogoutButtons.forEach(btn => btn.classList.add('hidden'));
-      }
-    }
-
-    function showAuthAlert(message, type = 'info') {
-      const el = document.getElementById('auth-result');
-      el.textContent = message;
-      el.className = 'mt-4 text-sm p-3 rounded-md';
-      if (type === 'success') el.classList.add('bg-green-100', 'text-green-800');
-      else if (type === 'danger') el.classList.add('bg-red-100', 'text-red-800');
-      else el.classList.add('bg-blue-100', 'text-blue-800');
-      el.classList.remove('hidden');
-    }
-
-    function showView(viewName, event) {
-      event?.preventDefault();
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-      document.getElementById('view-' + viewName)?.classList.add('active');
-      document.querySelector(`.nav-link[data-view="${viewName}"]`)?.classList.add('active');
-      const titles = {
-        dashboard: { title: 'Dasbor', subtitle: 'Ringkasan & aksi cepat' }, appliance: { title: 'Cek Alat', subtitle: 'Prediksi konsumsi energi Anda' },
-        billing: { title: 'Cek Tagihan', subtitle: 'Lihat detail tagihan PLN Anda' }, history: { title: 'Riwayat Prediksi', subtitle: 'Lihat prediksi Anda sebelumnya' },
-        chatbot: { title: 'Asisten AI', subtitle: 'Dapatkan tips cerdas hemat energi' }
-      };
-      document.getElementById('view-title').textContent = titles[viewName]?.title || 'Dasbor';
-      document.getElementById('view-subtitle').textContent = titles[viewName]?.subtitle || '';
-      if (viewName !== 'appliance') closeAllDropdowns();
-    }
-
-    // --- API & DATA FETCHING ---
-    async function fetchAPI(endpoint, options = {}) {
-      if (!options.headers) options.headers = {};
-      options.headers['Content-Type'] = 'application/json';
-      if (authToken) options.headers['Authorization'] = `Bearer ${authToken}`;
-      try {
-        const res = await fetch(API_BASE_URL + endpoint, options);
-        const data = await res.json();
-        if (!res.ok) return { isError: true, message: data.message || `Error: ${res.status}`, ...data };
-        return data;
-      } catch (err) {
-        return { isError: true, message: err.message || 'Terjadi kesalahan jaringan.' };
-      }
-    }
-
-    async function registerUser(event) {
-      event.preventDefault();
-      toggleButtonSpinner('register-button', true);
-      const body = {
-        name: document.getElementById('reg-name').value.trim(), username: document.getElementById('reg-username').value.trim(),
-        email: document.getElementById('reg-email').value.trim(), password: document.getElementById('reg-password').value,
-        plnCustomerId: document.getElementById('reg-pln').value.trim()
-      };
-      const data = await fetchAPI('/auth/register', { method: 'POST', body: JSON.stringify(body) });
-      toggleButtonSpinner('register-button', false);
-      if (data.token) {
-        authToken = data.token; currentUser = data; showAuthAlert('Pendaftaran berhasil! Mengalihkan...', 'success');
-        setTimeout(updateAuthStatus, 1000);
-      } else showAuthAlert(data.message || 'Pendaftaran gagal.', 'danger');
-    }
-
-    async function loginUser(event) {
-      event.preventDefault();
-      toggleButtonSpinner('login-button', true);
-      const body = {
-        emailOrUsername: document.getElementById('login-email').value.trim(), password: document.getElementById('login-password').value
-      };
-      const data = await fetchAPI('/auth/login', { method: 'POST', body: JSON.stringify(body) });
-      toggleButtonSpinner('login-button', false);
-      if (data.token) {
-        authToken = data.token; currentUser = data;
-        updateAuthStatus(); fetchInitialDashboardData();
-      } else showAuthAlert(data.message || 'Gagal masuk.', 'danger');
-    }
-
-    function logout() {
-      authToken = null; currentUser = null; chatHistory = []; userPower = null;
-      document.getElementById('chat-window').innerHTML = '';
-      // Reset header dan sidebar secara eksplisit
-      userInfo.textContent = '-'; userInfoMobile.textContent = '-'; topUser.innerHTML = '';
-      updateAuthStatus();
-    }
-
-    // --- DASHBOARD LOGIC ---
-    async function fetchInitialDashboardData() {
-        const history = await fetchAPI('/predict/history');
-        if (history && !history.isError && Array.isArray(history)) {
-            const latestBilling = history.find(h => h.inputType === 'pln_bill' && h.predictionResult?.billing_data?.power);
-            if (latestBilling) userPower = latestBilling.predictionResult.billing_data.power;
-            updateDashboardMetrics(history);
-            renderRecentActivity(history.slice(0, 5));
-        } else {
-            updateDashboardMetrics([]);
-            renderRecentActivity([]);
-        }
-    }
-
-    function updateDashboardMetrics(history) {
-        const kwhEl = document.getElementById('kwh-today');
-        const billEl = document.getElementById('bill-estimate');
-        const today = new Date().toDateString();
-
-        const todayApplianceHistory = history.filter(h => h.inputType === 'appliances' && new Date(h.createdAt).toDateString() === today);
-        const totalKwhToday = todayApplianceHistory.reduce((sum, item) => sum + (item.predictionResult.prediction_kw || 0), 0);
-        kwhEl.innerHTML = totalKwhToday > 0 ? `${totalKwhToday.toFixed(2)} <span class="text-lg font-medium">kWh</span>` : `- <span class="text-lg font-medium">kWh</span>`;
-
-        const todayPredictionsWithCost = todayApplianceHistory.filter(h => h.estimatedCost != null);
-        if (todayPredictionsWithCost.length > 0) {
-            const avgEstimatedBill = todayPredictionsWithCost.reduce((sum, item) => sum + item.estimatedCost, 0) / todayPredictionsWithCost.length;
-            billEl.textContent = `Rp ${Math.round(avgEstimatedBill).toLocaleString('id-ID')}`;
-        } else billEl.textContent = 'Rp -';
-    }
-
-    function renderRecentActivity(history) {
-        const container = document.getElementById('recent-activity');
-        if (history.length === 0) {
-            container.innerHTML = `<div class="text-center py-8 text-gray-400"><i class="bi bi-archive text-4xl"></i><p class="mt-2 text-sm">Belum ada aktivitas.</p></div>`;
-            return;
-        }
-        container.innerHTML = `
-            <ul role="list" class="divide-y divide-gray-200">
-                ${history.map(item => `
-                    <li class="py-3 flex items-center gap-4">
-                        <div class="h-8 w-8 rounded-full flex items-center justify-center ${item.inputType === 'appliances' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}">
-                            <i class="bi ${item.inputType === 'appliances' ? 'bi-cpu-fill' : 'bi-receipt-cutoff'}"></i>
+        <!-- Fitur -->
+        <section id="fitur" class="py-20 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-gray-900">Fitur Unggulan Kami</h2>
+                    <p class="mt-4 text-lg text-gray-600">Alat canggih untuk manajemen energi yang lebih baik.</p>
+                </div>
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 transition duration-300 feature-card">
+                        <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-2xl">
+                            <i class="bi bi-cpu-fill"></i>
                         </div>
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-800">${item.inputType === 'appliances' ? 'Prediksi Alat' : 'Cek Tagihan'}</p>
-                            <p class="text-xs text-gray-500">${new Date(item.createdAt).toLocaleString('id-ID', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}</p>
+                        <h3 class="mt-5 text-lg font-semibold text-gray-900">Prediksi Konsumsi Alat</h3>
+                        <p class="mt-2 text-sm text-gray-600">AI kami memprediksi penggunaan daya setiap alat agar Anda tahu konsumsi listrik real-time.</p>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 transition duration-300 feature-card">
+                        <div class="w-12 h-12 rounded-lg bg-green-100 text-green-600 flex items-center justify-center text-2xl">
+                            <i class="bi bi-receipt-cutoff"></i>
                         </div>
-                        <p class="text-sm font-semibold text-gray-700">
-                            ${item.inputType === 'appliances' ? `${Number(item.predictionResult.prediction_kw || 0).toFixed(2)} kWh` : `Rp ${Number(item.estimatedCost || 0).toLocaleString('id-ID')}`}
-                        </p>
-                    </li>
-                `).join('')}
-            </ul>
-        `;
-    }
-
-    // --- APPLIANCE PREDICTION LOGIC ---
-    function renderApplianceRows() {
-        const container = document.getElementById('appliance-rows-container');
-        container.innerHTML = applianceRows.length === 0 ? `<p class="text-sm text-gray-500">Klik 'Tambah Alat' untuk memulai.</p>` : '';
-        applianceRows.forEach((row, index) => {
-            const rowElement = document.createElement('div');
-            rowElement.className = 'grid grid-cols-12 gap-x-3 gap-y-2 items-end p-3 rounded-lg border bg-gray-50/50';
-            rowElement.innerHTML = `
-                <div class="col-span-12 md:col-span-5 relative">
-                    <label class="text-xs font-medium text-gray-500">Alat Elektronik</label>
-                    <input type="text" id="appliance-search-${index}" value="${row.deviceName}" onfocus="openDeviceDropdown(${index})" oninput="filterDevices(${index}, this.value)" placeholder="Cari alat..." class="w-full mt-1 p-2 border-gray-300 rounded-md shadow-sm text-sm" autocomplete="off">
-                    <div id="appliance-dropdown-${index}" class="absolute z-10 w-full bg-white border rounded-md mt-1 hidden max-h-48 overflow-y-auto shadow-lg"></div>
-                </div>
-                <div class="col-span-5 md:col-span-3"><label class="text-xs font-medium text-gray-500">Daya (Watt)</label><input type="number" min="0" value="${row.wattage || 0}" oninput="updateApplianceRow(${index}, 'wattage', this.value)" class="w-full mt-1 p-2 border-gray-300 rounded-md shadow-sm text-sm"></div>
-                <div class="col-span-4 md:col-span-2"><label class="text-xs font-medium text-gray-500">Jumlah</label><input type="number" min="1" value="${row.quantity}" oninput="updateApplianceRow(${index}, 'quantity', this.value)" class="w-full mt-1 p-2 border-gray-300 rounded-md shadow-sm text-sm"></div>
-                <div class="col-span-3 md:col-span-2 flex items-center justify-end"><button onclick="removeApplianceRow(${index})" class="h-10 px-3 text-red-500 hover:bg-red-100 rounded-md"><i class="bi bi-trash-fill"></i></button></div>`;
-            container.appendChild(rowElement);
-        });
-    }
-    
-    function openDeviceDropdown(index) { closeAllDropdowns(); document.getElementById(`appliance-dropdown-${index}`).classList.remove('hidden'); filterDevices(index, document.getElementById(`appliance-search-${index}`).value); }
-    function closeAllDropdowns() { document.querySelectorAll('[id^="appliance-dropdown-"]').forEach(d => d.classList.add('hidden')); }
-    function filterDevices(index, searchTerm) { const dropdown = document.getElementById(`appliance-dropdown-${index}`); const filtered = defaultDevices.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase())); dropdown.innerHTML = filtered.length > 0 ? filtered.map(d => `<div class="p-2 hover:bg-gray-100 cursor-pointer text-sm" onclick="selectDevice(${index}, '${d.name.replace(/'/g, "\\'")}')">${d.name}</div>`).join('') : `<div class="p-2 text-sm text-gray-500">Tidak ditemukan.</div>`; }
-    function selectDevice(index, deviceName) { const device = defaultDevices.find(d => d.name === deviceName); if (device) { applianceRows[index].deviceName = device.name; applianceRows[index].wattage = device.wattage; } closeAllDropdowns(); renderApplianceRows(); }
-    function addApplianceRow() { if (applianceRows.length < 10) { applianceRows.push({ deviceName: '', quantity: 1, wattage: 0 }); renderApplianceRows(); } else alert("Maksimal 10 alat."); }
-    function removeApplianceRow(index) { applianceRows.splice(index, 1); renderApplianceRows(); }
-    function updateApplianceRow(index, field, value) { if (field === 'deviceName') applianceRows[index].deviceName = value; else if (field === 'quantity') applianceRows[index].quantity = parseInt(value, 10) || 1; else if (field === 'wattage') { applianceRows[index].wattage = parseInt(value, 10) || 0; const device = defaultDevices.find(d => d.name === applianceRows[index].deviceName); if(device && device.wattage !== applianceRows[index].wattage) applianceRows[index].deviceName = ''; }}
-    
-    async function getAppliancePrediction() {
-        toggleButtonSpinner('predict-button', true);
-        let sub_metering_1 = 0, sub_metering_2 = 0, sub_metering_3 = 0;
-        applianceRows.forEach(row => {
-            const device = defaultDevices.find(d => d.name === row.deviceName);
-            const wattage = row.wattage || device?.wattage || 0;
-            if (wattage > 0) {
-                const usage = (wattage / 1000) * row.quantity;
-                const subMeter = device?.subMeter || 'Sub_metering_3'; // Default to sub_metering_3 if not found
-                if (subMeter === 'Sub_metering_1') sub_metering_1 += usage;
-                else if (subMeter === 'Sub_metering_2') sub_metering_2 += usage;
-                else sub_metering_3 += usage;
-            }
-        });
-        const body = {
-            Sub_metering_1: sub_metering_1, Sub_metering_2: sub_metering_2, Sub_metering_3: sub_metering_3,
-            hour: parseInt(document.getElementById('hour').value) || 0, userPower: userPower,
-        };
-        const data = await fetchAPI('/predict/appliances/tfjs', { method: 'POST', body: JSON.stringify(body) });
-        toggleButtonSpinner('predict-button', false);
-        renderApplianceResult(data);
-    }
-
-    function renderApplianceResult(data) {
-        const cont = document.getElementById('appliance-result-container');
-        if (!data || data.isError || data.prediction_kw === undefined) {
-            cont.innerHTML = `<div class="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200">${data?.message || 'Gagal memuat prediksi.'}</div>`; return;
-        }
-        const { prediction_kw, category, focus_area, specific_recommendation, breakdown, estimated_monthly_cost } = data;
-        let badgeClass = 'bg-green-100 text-green-800';
-        if (category === 'Tinggi') badgeClass = 'bg-red-100 text-red-800';
-        else if (category === 'Sedang') badgeClass = 'bg-yellow-100 text-yellow-800';
-        const recommendationHtml = marked.parse(specific_recommendation || 'Tidak ada.');
-        cont.innerHTML = `
-            <div class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-blue-50 border border-blue-200 p-6 rounded-lg text-center">
-                        <p class="text-sm font-medium text-blue-700">Prediksi Konsumsi (1 Jam)</p>
-                        <p class="text-5xl font-extrabold text-blue-900 my-2">${Number(prediction_kw).toFixed(2)} <span class="text-2xl font-medium">kWh</span></p>
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${badgeClass}">Konsumsi ${category}</span>
+                        <h3 class="mt-5 text-lg font-semibold text-gray-900">Cek Tagihan PLN</h3>
+                        <p class="mt-2 text-sm text-gray-600">Terhubung langsung ke data resmi PLN untuk estimasi tagihan yang akurat.</p>
                     </div>
-                    <div class="bg-green-50 border border-green-200 p-6 rounded-lg text-center">
-                        <p class="text-sm font-medium text-green-700">Estimasi Biaya Bulanan</p>
-                        ${estimated_monthly_cost != null ? `<p class="text-5xl font-extrabold text-green-900 my-2">Rp ${Math.round(estimated_monthly_cost).toLocaleString('id-ID')}</p><p class="text-xs text-gray-500">Estimasi jika penggunaan konstan 24/7.</p>` : `<p class="my-2 text-gray-500">Cek tagihan dahulu untuk mendapat estimasi.</p>`}
+
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 transition duration-300 feature-card">
+                        <div class="w-12 h-12 rounded-lg bg-gray-800 text-white flex items-center justify-center text-2xl">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <h3 class="mt-5 text-lg font-semibold text-gray-900">Asisten AI Cerdas</h3>
+                        <p class="mt-2 text-sm text-gray-600">Tanyakan apa saja tentang efisiensi energi dan dapatkan rekomendasi yang dipersonalisasi.</p>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-lg border">
-                    <h4 class="font-semibold text-gray-800">Rekomendasi Hemat Energi</h4>
-                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                         <div><p class="font-medium text-sm">Area Fokus</p><p class="text-sm text-gray-600 mt-1">${focus_area || 'N/A'}</p></div>
-                         <div><p class="font-medium text-sm">Saran Spesifik</p><div class="text-sm text-gray-600 mt-1" style="white-space: pre-line;">${recommendationHtml}</div></div>
+            </div>
+        </section>
+
+        <!-- Pricing -->
+        <section id="pricing" class="py-24 bg-gradient-to-b from-white to-gray-50">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+                <h2 class="text-3xl font-bold text-gray-900">Pilih Paket yang Sesuai</h2>
+                <p class="mt-4 text-lg text-gray-600">Mulai gratis dan tingkatkan ke fitur premium kapan saja.</p>
+
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Free Plan -->
+                    <div class="border border-gray-200 rounded-2xl shadow-sm bg-white p-10 flex flex-col justify-between hover:shadow-md transition">
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-2">Free</h3>
+                            <p class="text-gray-500 mb-6">Untuk pengguna individu yang ingin mulai mengelola energi rumahnya sendiri.</p>
+                            <p class="text-5xl font-bold text-gray-900 mb-6">Rp0<span class="text-base text-gray-500 font-normal">/bulan</span></p>
+                            <ul class="text-left space-y-3 text-sm text-gray-600">
+                                <li><i class="bi bi-check-circle text-green-500 mr-2"></i> Prediksi konsumsi energi dasar</li>
+                                <li><i class="bi bi-check-circle text-green-500 mr-2"></i> Cek tagihan PLN terbaru</li>
+                                <li><i class="bi bi-check-circle text-green-500 mr-2"></i> Tips efisiensi energi umum</li>
+                                <li><i class="bi bi-x-circle text-gray-400 mr-2"></i> Tidak termasuk laporan historis</li>
+                                <li><i class="bi bi-x-circle text-gray-400 mr-2"></i> Tanpa personalisasi AI</li>
+                            </ul>
+                        </div>
+                        <a href="dashboard.html" class="mt-8 inline-flex items-center justify-center w-full px-6 py-3 rounded-full text-sm font-medium text-blue-600 border border-blue-600 hover:bg-blue-600 hover:text-white transition">
+                            Coba Gratis
+                        </a>
+                    </div>
+
+                    <!-- Premium Plan -->
+                    <div class="border-2 border-blue-600 rounded-2xl shadow-xl bg-white p-10 flex flex-col justify-between relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-blue-600 text-white text-xs px-4 py-1 rounded-bl-lg font-medium">Rekomendasi</div>
+                        <div>
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-2">Premium</h3>
+                            <p class="text-gray-500 mb-6">Untuk keluarga dan profesional yang ingin mengoptimalkan efisiensi energi sepenuhnya.</p>
+                            <p class="text-5xl font-bold text-gray-900 mb-6">Rp49.000<span class="text-base text-gray-500 font-normal">/bulan</span></p>
+                            <ul class="text-left space-y-3 text-sm text-gray-600">
+                                <li><i class="bi bi-check-circle text-green-500 mr-2"></i> Semua fitur di paket Free</li>
+                                <li><i class="bi bi-check-circle text-green-500 mr-2"></i> Laporan konsumsi dan tren historis</li>
+                                <li><i class="bi bi-check-circle text-green-500 mr-2"></i> Rekomendasi AI yang dipersonalisasi</li>
+                                <li><i class="bi bi-check-circle text-green-500 mr-2"></i> Analisis prediksi biaya bulanan</li>
+                                <li><i class="bi bi-check-circle text-green-500 mr-2"></i> Dukungan prioritas</li>
+                            </ul>
+                        </div>
+                        <a href="dashboard.html" class="mt-8 inline-flex items-center justify-center w-full px-6 py-3 rounded-full text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition shadow-lg">
+                            Mulai Premium
+                        </a>
                     </div>
                 </div>
-            </div>`;
-    }
-    
-    // --- Other Feature Functions ---
-    async function getBillingEstimation() { showView('billing', event); getBillingEstimationFromField(); }
-    async function getBillingEstimationFromField() {
-      const plnCustomerId = document.getElementById('billing-pln-2').value;
-      if (!plnCustomerId) { renderBillingResult({isError:true, message:'ID Pelanggan tidak boleh kosong.'}); return; }
-      toggleButtonSpinner('billing-check-button', true);
-      const data = await fetchAPI('/predict/billing', { method: 'POST', body: JSON.stringify({ plnCustomerId }) });
-      toggleButtonSpinner('billing-check-button', false);
-      renderBillingResult(data);
-    }
+            </div>
+        </section>
 
-    function renderBillingResult(data) {
-      const cont = document.getElementById('billing-result-container');
-      if (data.isError || !data.billing_data) {
-        cont.innerHTML = `<div class="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200">${data.message || 'Gagal memuat data.'}</div>`; return;
-      }
-      const { billing_data } = data;
-      if (billing_data.power) userPower = billing_data.power; // Update user power
-      cont.innerHTML = `
-        <div class="space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4"><div class="bg-gray-50 p-4 rounded-lg"><p class="text-xs text-gray-500">Nama</p><p class="font-semibold truncate">${billing_data.customerName}</p></div><div class="bg-gray-50 p-4 rounded-lg"><p class="text-xs text-gray-500">Periode</p><p class="font-semibold">${billing_data.period}</p></div><div class="bg-gray-50 p-4 rounded-lg"><p class="text-xs text-gray-500">Daya</p><p class="font-semibold">${billing_data.power}</p></div></div>
-            <div class="bg-green-100 border border-green-200 text-green-800 p-6 rounded-lg text-center"><p class="text-sm font-medium">Total Tagihan</p><p class="text-4xl font-bold">Rp ${Number(billing_data.totalBill).toLocaleString('id-ID')}</p></div>
-        </div>`;
-    }
+        <!-- Demo Appliance Section -->
+        <section id="demo" class="py-20 bg-white">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">Demo Fitur EnergyMate</h2>
+                    <p class="mt-4 text-lg text-gray-600">Simulasikan prediksi energi alat rumah Anda tanpa login.</p>
+                </div>
 
-    async function getHistory() {
-      const cont = document.getElementById('history-result-container');
-      cont.innerHTML = `<div class="text-center py-12 text-gray-400"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div></div>`;
-      const data = await fetchAPI('/predict/history');
-      if (data && !data.isError) { renderHistory(data); updateDashboardMetrics(data); } 
-      else renderHistory([]);
-    }
-    
-    function renderHistory(data) {
-      const cont = document.getElementById('history-result-container');
-      if (!Array.isArray(data) || data.length === 0) { cont.innerHTML = `<div class="text-center py-12 text-gray-400"><i class="bi bi-archive text-4xl"></i><p class="mt-2 text-sm">Riwayat kosong.</p></div>`; return; }
-      cont.innerHTML = `<ul role="list" class="divide-y divide-gray-200">${data.map(item => `
-        <li class="py-4"><div class="flex space-x-3"><div class="flex-1 space-y-1"><div class="flex items-center justify-between">
-            <h3 class="text-sm font-medium">${item.inputType === 'appliances' ? 'Prediksi Alat' : 'Cek Tagihan'}</h3>
-            <p class="text-sm text-gray-500">${new Date(item.createdAt).toLocaleString('id-ID', {dateStyle:'medium', timeStyle:'short'})}</p>
-        </div><p class="text-sm text-gray-500">${item.inputType === 'appliances' ? `Hasil: ${Number(item.predictionResult.prediction_kw || 0).toFixed(2)} kWh (${item.predictionResult.category || 'N/A'})` : `Tagihan: Rp ${Number(item.estimatedCost || 0).toLocaleString('id-ID')}`}</p></div></div></li>`).join('')}</ul>`;
-    }
+                <!-- Appliance View -->
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200">
+                    <h3 class="text-xl font-bold text-gray-900">Prediksi Energi Alat Elektronik</h3>
+                    <p class="text-sm text-gray-500 mt-1">Tambahkan alat elektronik rumah Anda untuk memprediksi konsumsi energi satu jam ke depan.</p>
+                    <div class="mt-6 border-t pt-6 space-y-4" id="appliance-rows-container"></div>
+                    <div class="mt-4 flex items-center gap-4">
+                        <button onclick="addApplianceRow()" class="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            <i class="bi bi-plus-lg"></i> Tambah Alat
+                        </button>
+                    </div>
+                    <div class="mt-6 border-t pt-6">
+                        <label for="hour" class="block text-sm font-medium text-gray-700">Waktu Prediksi</label>
+                        <select id="hour" class="mt-1 block w-full max-w-xs pl-3 pr-10 py-2 text-base border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
+                    </div>
+                    <div class="mt-6">
+                        <button onclick="getAppliancePrediction()" id="predict-button" class="w-full md:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="bi bi-calculator-fill"></i> 
+                            <span class="btn-text">Dapatkan Prediksi</span>
+                            <span class="btn-spinner hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                        </button>
+                    </div>
+                    <div id="appliance-result-container" class="mt-8">
+                        <div class="bg-gray-50 text-center py-12 px-6 rounded-lg border border-gray-200">
+                            <i class="bi bi-cpu text-5xl text-gray-400"></i>
+                            <p class="mt-4 text-sm font-medium text-gray-500">Hasil prediksi akan muncul di sini.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    async function sendMessageToChatbot() {
-      const input = document.getElementById('chat-input');
-      const message = input.value.trim();
-      if (!message) return;
-      appendToChatWindow(message, 'user'); chatHistory.push({ role: 'user', parts: [{ text: message }] }); input.value = ''; input.disabled = true;
-      const data = await fetchAPI('/chatbot', { method: 'POST', body: JSON.stringify({ message, history: chatHistory.slice(-10) }) });
-      if (data && data.reply) { appendToChatWindow(data.reply, 'model'); chatHistory.push({ role: 'model', parts: [{ text: data.reply }] }); } 
-      else appendToChatWindow(`Error: ${data.message || 'Gagal.'}`, 'model');
-      input.disabled = false; input.focus();
-    }
-    
-    function appendToChatWindow(message, role) {
-      const chatWindow = document.getElementById('chat-window');
-      const msgWrapper = document.createElement('div');
-      const isUser = role === 'user';
-      msgWrapper.className = `flex my-2 ${isUser ? 'justify-end' : 'justify-start'}`;
-      msgWrapper.innerHTML = `<div class="p-3 rounded-2xl max-w-sm md:max-w-md ${isUser ? 'bg-blue-600 text-white rounded-br-lg' : 'bg-gray-200 text-gray-800 rounded-bl-lg'}">${message.replace(/\n/g, '<br>')}</div>`;
-      chatWindow.appendChild(msgWrapper); chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
+        <!-- Blog Preview -->
+        <section class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-gray-900">Baca Artikel Terbaru</h2>
+                    <p class="mt-4 text-lg text-gray-600">Dapatkan wawasan dan tips terbaru seputar hemat energi.</p>
+                </div>
+                <div class="mt-12 max-w-lg mx-auto grid gap-8 lg:grid-cols-2 lg:max-w-none">
+                    <div class="flex flex-col rounded-lg shadow-lg overflow-hidden">
+                        <div class="flex-shrink-0">
+                            <img class="h-48 w-full object-cover" src="https://placehold.co/600x400/3b82f6/ffffff?text=Tips+Hemat" alt="">
+                        </div>
+                        <div class="flex-1 bg-white p-6 flex flex-col justify-between">
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-blue-600">Studi Kasus</p>
+                                <a href="blog.html" class="block mt-2">
+                                    <p class="text-xl font-semibold text-gray-900">5 Perubahan Kecil di Rumah yang Menurunkan Tagihan Listrik 20%</p>
+                                    <p class="mt-3 text-base text-gray-500">Pelajari bagaimana kebiasaan sederhana dan penggunaan alat yang tepat dapat memberikan dampak besar terhadap penghematan anggaran listrik bulanan Anda.</p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col rounded-lg shadow-lg overflow-hidden">
+                        <div class="flex-shrink-0">
+                            <img class="h-48 w-full object-cover" src="https://placehold.co/600x400/10b981/ffffff?text=Teknologi" alt="">
+                        </div>
+                        <div class="flex-1 bg-white p-6 flex flex-col justify-between">
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-green-600">Panduan</p>
+                                <a href="blog.html" class="block mt-2">
+                                    <p class="text-xl font-semibold text-gray-900">Memahami Daya VA vs Watt: Apa Bedanya untuk Tagihan Anda?</p>
+                                    <p class="mt-3 text-base text-gray-500">Sering bingung dengan istilah di tagihan PLN? Kami akan membantu Anda memahami konsep dasar daya listrik serta bagaimana hal itu memengaruhi biaya listrik Anda.</p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
-    // --- INITIALIZATION ---
-    document.addEventListener('DOMContentLoaded', () => {
-      const hourSelect = document.getElementById('hour');
-      const currentHour = new Date().getHours();
-      for (let i = 0; i < 24; i++) {
-        const option = document.createElement('option');
-        option.value = i; option.textContent = `${String(i).padStart(2, '0')}:00`;
-        if (i === currentHour) option.selected = true;
-        hourSelect.appendChild(option);
-      }
-      
-      addApplianceRow(); updateAuthStatus(); showView('dashboard');
-      appendToChatWindow('Halo! Saya EnergyMate. Ada yang bisa saya bantu untuk hemat energi hari ini?', 'model');
-      
-      document.getElementById('chat-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); sendMessageToChatbot(); }});
-      document.addEventListener('click', (e) => { if (!e.target.closest('[id^="appliance-search-"]') && !e.target.closest('[id^="appliance-dropdown-"]')) closeAllDropdowns(); });
-    });
-  </script>
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2025 EnergyMate. Semua Hak Cipta Dilindungi.</p>
+        </div>
+    </footer>
 
+    <!-- Custom JS -->
+    <script src="assets/app.js"></script>
 </body>
 </html>

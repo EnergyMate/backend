@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------------
-// Controller untuk Logika Prediksi Energi (Updated with TFJS-WASM)
+// Controller untuk Logika Prediksi Energi (Updated with TFJS)
 // -----------------------------------------------------------------------------
 const axios = require('axios');
 const crypto = require('crypto');
@@ -11,9 +11,6 @@ const { generateGeminiResponse } = require('../services/geminiService');
 // --- TF.js Setup (CPU Backend) ---
 const tf = require('@tensorflow/tfjs');
 const fetch = require('node-fetch');
-const dotenv = require('dotenv');
-
-dotenv.config();
 
 // --- Environment Variables ---
 const MODEL_BASE_URL = process.env.MODEL_BASE_URL; // contoh: http://localhost:5001/model
@@ -85,14 +82,21 @@ const getAppliancePredictionTfjs = async (req, res) => {
     }
 
     try {
-        // 1. Preprocessing & Prediction
+        // 1️⃣ Preprocessing & Prediction
         const total_kw = Sub_metering_1 + Sub_metering_2 + Sub_metering_3;
         const global_intensity = (total_kw * 1000) / 230;
 
         const inputData = [global_intensity, Sub_metering_1, Sub_metering_2, Sub_metering_3, hour];
 
-        // Scale input data menggunakan min_ + scale_ karena mean_ null
-        const scaledInput = inputData.map((val, i) => (val - X_scaler.min_[i]) / X_scaler.scale_[i]);
+        let warning = null;
+        if (total_kw > 5) {
+            warning = "⚠️ Total input lebih dari 5 kWh. Hasil prediksi mungkin kurang akurat. Mohon pastikan data sudah benar.";
+        }
+
+        // Scale input data menggunakan min_ + scale_
+        const scaledInput = inputData.map((val, i) =>
+            (val - X_scaler.data_min_[i]) / (X_scaler.data_max_[i] - X_scaler.data_min_[i])
+        );
 
         // Reshape untuk model (1, 60, 5)
         const past_60_input = Array(60).fill(scaledInput);
@@ -102,25 +106,54 @@ const getAppliancePredictionTfjs = async (req, res) => {
         const pred_scaled = await prediction.data();
         tf.dispose([inputTensor, prediction]);
 
-        // Inverse transform prediction menggunakan min_ + scale_
-        const prediction_kw = (pred_scaled[0] * y_scaler.scale_[0]) + y_scaler.min_[0];
+        // Inverse transform prediction
+        const prediction_kw =
+            pred_scaled[0] * (y_scaler.data_max_[0] - y_scaler.data_min_[0]) + y_scaler.data_min_[0];
 
-        // 2. Recommendation Logic
+        // 2️⃣ Klasifikasi & Fokus Area
         const category = prediction_kw < Q1 ? "Rendah" : prediction_kw <= Q3 ? "Sedang" : "Tinggi";
         const usage_kws = { Sub_metering_1, Sub_metering_2, Sub_metering_3 };
-        const max_sub = Object.keys(usage_kws).reduce((a, b) => usage_kws[a] > usage_kws[b] ? a : b);
+        const max_sub = Object.keys(usage_kws).reduce((a, b) =>
+            usage_kws[a] > usage_kws[b] ? a : b
+        );
         const focus_area = SUB_LABELS[max_sub];
 
-        // 3. Generate recommendation dengan Gemini
-        const breakdown_text = Object.entries(usage_kws)
-            .map(([k, v]) => `- ${SUB_LABELS[k]}: ${v.toFixed(2)} kWh`).join('\n');
+        // 3️⃣ Tentukan metode rekomendasi (Login → Gemini | Non-login → Rule-based)
+        const token = req.headers.authorization?.split(' ')[1];
+        let specific_recommendation;
 
-        const llm_prompt = `Berdasarkan data berikut, berikan 3 rekomendasi spesifik untuk hemat energi:\n1. Kategori Konsumsi: ${category} (Prediksi: ${prediction_kw.toFixed(2)} kWh).\n2. Area Beban Tertinggi: ${focus_area}.\n3. Rincian Penggunaan:\n${breakdown_text}`;
-        const systemInstruction = "Anda adalah ahli efisiensi energi. Berikan saran hemat energi yang sangat spesifik namun tetap ringkas, terperinci, dan berorientasi tindakan dalam BAHASA INDONESIA, berdasarkan data konsumsi. Jawab hanya dengan rekomendasi spesifik (maksimal 3 poin).";
+        if (token) {
+            // 🔐 Jika login → coba validasi token dan gunakan Gemini
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const user = await User.findById(decoded.id);
 
-        const specific_recommendation = await generateGeminiResponse(systemInstruction, llm_prompt);
+                if (user) {
+                    const breakdown_text = Object.entries(usage_kws)
+                        .map(([k, v]) => `- ${SUB_LABELS[k]}: ${v.toFixed(2)} kWh`)
+                        .join('\n');
 
-        // 4. Final Result Assembly
+                    const llm_prompt = `Berdasarkan data berikut, berikan 3 rekomendasi spesifik untuk hemat energi:
+                        1. Kategori Konsumsi: ${category} (Prediksi: ${prediction_kw.toFixed(2)} kWh).
+                        2. Area Beban Tertinggi: ${focus_area}.
+                        3. Rincian Penggunaan:
+                        ${breakdown_text}`;
+
+                    const systemInstruction =
+                        "Anda adalah ahli efisiensi energi. Berikan saran hemat energi yang sangat spesifik namun tetap ringkas, terperinci, dan berorientasi tindakan dalam BAHASA INDONESIA, berdasarkan data konsumsi. Jawab hanya dengan rekomendasi spesifik (maksimal 3 poin).";
+
+                    specific_recommendation = await generateGeminiResponse(systemInstruction, llm_prompt);
+                }
+            } catch {
+                // Jika token invalid, gunakan fallback rule-based
+                specific_recommendation = generateRuleBasedRecommendation(category, focus_area);
+            }
+        } else {
+            // 🚫 Jika tidak login → rule-based recommendation
+            specific_recommendation = generateRuleBasedRecommendation(category, focus_area);
+        }
+
+        // 4️⃣ Hitung estimasi biaya
         let estimated_monthly_cost = null;
         if (userPower && prediction_kw > 0) {
             const powerKey = Object.keys(TARIFFS).find(k => userPower.includes(k.split(' ')[0]));
@@ -128,18 +161,20 @@ const getAppliancePredictionTfjs = async (req, res) => {
             estimated_monthly_cost = prediction_kw * 24 * 30 * tariff;
         }
 
+        // 5️⃣ Hasil akhir
         const result = {
             prediction_kw: parseFloat(prediction_kw.toFixed(2)),
             category,
             focus_area,
             specific_recommendation,
             estimated_monthly_cost,
-            breakdown: Object.fromEntries(Object.entries(usage_kws)
-                .map(([k, v]) => [SUB_LABELS[k], v.toFixed(2)]))
+            breakdown: Object.fromEntries(
+                Object.entries(usage_kws).map(([k, v]) => [SUB_LABELS[k], v.toFixed(2)])
+            ),
+            warning
         };
 
-        // Optional: Save ke history
-        const token = req.headers.authorization?.split(' ')[1];
+        // 6️⃣ Optional: simpan ke history jika login
         if (token) {
             try {
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -152,7 +187,9 @@ const getAppliancePredictionTfjs = async (req, res) => {
                         estimatedCost: estimated_monthly_cost
                     });
                 }
-            } catch (e) { /* Abaikan jika token tidak valid */ }
+            } catch {
+                // Abaikan jika token invalid
+            }
         }
 
         res.json(result);
@@ -161,6 +198,35 @@ const getAppliancePredictionTfjs = async (req, res) => {
         res.status(500).json({ message: "Error during TF.js prediction." });
     }
 };
+
+/**
+ * @desc Rule-based fallback recommendation (non-login users)
+ */
+function generateRuleBasedRecommendation(category, focus_area) {
+    let baseTips = [];
+
+    if (category === "Rendah") {
+        baseTips = [
+            `Pertahankan efisiensi Anda — penggunaan energi di ${focus_area} sudah tergolong hemat.`,
+            `Pastikan peralatan di ${focus_area} dimatikan sepenuhnya saat tidak digunakan.`,
+            `Periksa beban standby seperti lampu indikator atau charger yang masih terpasang.`
+        ];
+    } else if (category === "Sedang") {
+        baseTips = [
+            `Konsumsi sedang — pertimbangkan mengurangi penggunaan alat berat di ${focus_area} saat jam sibuk.`,
+            `Gunakan mode hemat energi pada peralatan di ${focus_area}.`,
+            `Matikan atau cabut perangkat tidak aktif untuk menghindari pemborosan.`
+        ];
+    } else {
+        baseTips = [
+            `Konsumsi tinggi — segera kurangi beban di ${focus_area}.`,
+            `Gunakan peralatan besar secara bergantian agar tidak bersamaan.`,
+            `Pertimbangkan mengganti perangkat di ${focus_area} dengan versi hemat energi (ENERGY STAR).`
+        ];
+    }
+
+    return baseTips.join('\n');
+}
 
 /**
  * @desc    [Flask] Get prediction based on appliance usage.
