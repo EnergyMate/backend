@@ -316,6 +316,7 @@ async function loginUser(event) {
 function logout() {
     sessionStorage.removeItem('authToken');
     sessionStorage.removeItem('currentUser');
+    sessionStorage.removeItem('chatHistory'); // Membersihkan riwayat obrolan dari sesi
     authToken = null;
     currentUser = null;
     chatHistory = [];
@@ -359,12 +360,25 @@ function initApp() {
     applianceRows = [];
     addApplianceRow();
 
-    // Reset chatbot to its initial state
-    chatHistory = [];
+    // Reset chatbot to its initial state or load from session
     const chatWindow = document.getElementById('chat-window');
     if(chatWindow) {
         chatWindow.innerHTML = '';
-        appendToChatWindow('Halo! Saya EnergyMate. Ada yang bisa saya bantu untuk hemat energi hari ini?', 'model');
+        const savedChat = sessionStorage.getItem('chatHistory');
+        // Periksa apakah savedChat ada dan bukan string array kosong '[]'
+        if (savedChat && JSON.parse(savedChat).length > 0) {
+            chatHistory = JSON.parse(savedChat);
+            chatHistory.forEach(chat => {
+                appendToChatWindow(chat.parts[0].text, chat.role);
+            });
+        } else {
+            // Inisialisasi sesi obrolan baru
+            chatHistory = [];
+            const initialMessage = 'Halo! Saya EnergyMate. Ada yang bisa saya bantu untuk hemat energi hari ini?';
+            appendToChatWindow(initialMessage, 'model');
+            chatHistory.push({ role: 'model', parts: [{ text: initialMessage }] });
+            sessionStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+        }
     }
 
     // Clear any previous results from other views
@@ -636,15 +650,72 @@ function renderHistory(data) {
 
 async function sendMessageToChatbot() {
     const input = document.getElementById('chat-input');
-    if(!input) return;
+    const sendBtn = document.getElementById('chat-send-btn');
+    if (!input || !sendBtn) return;
     const message = input.value.trim();
     if (!message) return;
-    appendToChatWindow(message, 'user'); chatHistory.push({ role: 'user', parts: [{ text: message }] }); input.value = ''; input.disabled = true;
+
+    appendToChatWindow(message, 'user');
+    chatHistory.push({ role: 'user', parts: [{ text: message }] });
+    input.value = '';
+    input.disabled = true;
+    sendBtn.disabled = true;
+
+    // Show loading indicator
+    showChatLoading(true);
+    const sendButtonIcon = sendBtn.querySelector('i');
+    if (sendButtonIcon) sendButtonIcon.className = 'bi bi-arrow-clockwise animate-spin';
+
     const data = await fetchAPI('/chatbot', { method: 'POST', body: JSON.stringify({ message, history: chatHistory.slice(-10) }) });
-    if (data && data.reply) { appendToChatWindow(data.reply, 'model'); chatHistory.push({ role: 'model', parts: [{ text: data.reply }] }); } 
-    else appendToChatWindow(`Error: ${data.message || 'Gagal.'}`, 'model');
-    input.disabled = false; input.focus();
+
+    // Hide loading indicator
+    showChatLoading(false);
+    if (sendButtonIcon) sendButtonIcon.className = 'bi bi-send-fill';
+
+    if (data && data.reply) {
+        appendToChatWindow(data.reply, 'model');
+        chatHistory.push({ role: 'model', parts: [{ text: data.reply }] });
+    } else {
+        appendToChatWindow(`Error: ${data.message || 'Gagal.'}`, 'model');
+        // Kami tidak menambahkan kesalahan ke riwayat obrolan agar tidak membingungkan model pada giliran berikutnya.
+    }
+    
+    // Simpan riwayat yang diperbarui ke sessionStorage
+    sessionStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+
+    input.disabled = false;
+    sendBtn.disabled = false;
+    input.focus();
 }
+
+
+function showChatLoading(isLoading) {
+    const chatWindow = document.getElementById('chat-window');
+    if (!chatWindow) return;
+
+    // Remove any existing loading indicator first
+    const existingLoading = document.getElementById('chat-loading-indicator');
+    if (existingLoading) {
+        existingLoading.remove();
+    }
+
+    if (isLoading) {
+        const loadingWrapper = document.createElement('div');
+        loadingWrapper.id = 'chat-loading-indicator';
+        loadingWrapper.className = 'flex my-2 justify-start';
+        loadingWrapper.innerHTML = `
+            <div class="p-3 rounded-2xl max-w-sm md:max-w-md bg-gray-200 text-gray-800 rounded-bl-lg">
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 bg-gray-500 rounded-full animate-pulse" style="animation-delay: 0s;"></div>
+                    <div class="w-2 h-2 bg-gray-500 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
+                    <div class="w-2 h-2 bg-gray-500 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
+                </div>
+            </div>`;
+        chatWindow.appendChild(loadingWrapper);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+}
+
 
 function appendToChatWindow(message, role) {
     const chatWindow = document.getElementById('chat-window');
