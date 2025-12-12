@@ -1,6 +1,7 @@
 # ⚡ EnergyMate — Backend
 
-[Live demo ➜ energymate.github.io/backend](https://energymate.github.io/backend)  
+[Live demo ➜ energymate.github.io/backend](https://energymate.github.io/backend)
+
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg) ![Node.js](https://img.shields.io/badge/stack-Node.js-green)
 
 ✨ Singkatnya: backend ini menyediakan API untuk prediksi konsumsi energi, integrasi AI chatbot, dan estimasi tagihan listrik—menggabungkan model ML (TensorFlow.js) dengan layanan eksternal untuk pengalaman demo interaktif.
